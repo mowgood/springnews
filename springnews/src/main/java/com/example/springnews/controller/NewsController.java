@@ -3,6 +3,8 @@ package com.example.springnews.controller;
 import com.example.springnews.model.News;
 import com.example.springnews.repository.NewsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -65,7 +67,6 @@ public class NewsController {
         ModelAndView mav = new ModelAndView();
         if (list.size() != 0) {
             mav.addObject("list", list);
-            mav.addObject("button", "메인화면으로");
         } else {
             mav.addObject("msg", "게시물을 찾을 수 없습니다.");
         }
@@ -79,7 +80,6 @@ public class NewsController {
         ModelAndView mav = new ModelAndView();
         if (list.size() != 0) {
             mav.addObject("list", list);
-            mav.addObject("button", "메인화면으로");
         } else {
             mav.addObject("msg", "게시물을 찾을 수 없습니다.");
         }
@@ -117,6 +117,19 @@ public class NewsController {
             mav.addObject("errorMsg", "글 작성을 수정하는 동안 오류가 발생했습니다.");
         }
         mav.setViewName("newsView");
+        return mav;
+    }
+
+    @GetMapping("/part")
+    public ModelAndView part(int page, int size) {
+        ModelAndView mav = new ModelAndView();
+        PageRequest pageRequest = PageRequest.of(page, size);
+        Page<News> pageObj = newsRepository.findAll(pageRequest);
+        List<News> list = pageObj.toList();
+        int totalPage = pageObj.getTotalPages();
+        mav.setViewName("newsView");
+        mav.addObject("list", list);
+        mav.addObject("totalPage", totalPage);
         return mav;
     }
 }

@@ -57,7 +57,7 @@
             <td>[[${ vo.id }]]</td>
             <td th:class="${vo.id}" th:onclick="|getContent(${vo.id})|">[[${ vo.title }]]</td>
             <td th:class="${vo.id}"><a th:href ="@{/writer(writer=${vo.writer})}">[[${ vo.writer }]]</a></td>
-            <td>[[${ vo.writeDate }]]</td>
+            <td th:text="${#temporals.format(vo.writeDate, 'yyyy-MM-dd')}"></td>
             <td>[[${ vo.cnt }]]</td>
             <td th:class="${vo.id}" hidden>[[${ vo.content }]]</td>
         </tr>
@@ -68,6 +68,12 @@
         </tr>
     </th:block>
 </table>
+<div class="pagination">
+    <span th:each="page : ${#numbers.sequence(0, totalPage - 1)}">
+        <a th:href="@{/part(page=${pageStat.index}, size=1)}" th:text="${pageStat.index + 1}"></a>
+    </span>
+</div>
+
 <th:block th:if="${ errorMsg }" >
     <script th:inline="javascript">
         alert([[${ errorMsg }]]);
@@ -81,10 +87,6 @@
 </div>
 <br>
 <button onclick="displayWrite();">뉴스 작성</button>
-<th:block th:if="${ button }" >
-    <hr>
-    <button onclick="location.href='/newsmain'">[[${ button }]]</button>
-</th:block>
 <script>
 function displayWrite() {
 		document.getElementById("write").style.display='block';
@@ -114,6 +116,7 @@ function displayContent(vo) {
 
 	document.querySelector("#write [id=btn1]").value = "확인";
 	document.querySelector("#write [id=btn1]").type= "button";
+	document.querySelector("#write [id=btn1]").setAttribute("onclick", "document.getElementById('write').style.display='none';return false");
 	document.querySelector("#write [id=btn2]").value = "수정";
 	document.querySelector("#write [id=btn2]").type = "submit";
 	document.querySelector("#write [id=btn3]").value = "삭제";
