@@ -11,13 +11,16 @@
 
     * {
     	font-family: 'OTWelcomeRA';
+        text-align: center;
+        margin-left: auto;
+        margin-right: auto;
     }
 	td{
 		border-bottom : 2px dotted green;
 		padding-left : 20px;
 	}
 	tr:hover{
-		background-color : pink;
+		background-color : #FFD9FA;
 		font-weight : bold;
 	}
 	td:nth-child(2){
@@ -33,20 +36,23 @@
 	button {
 		padding-top : 5px;
 	}
+    #thead {
+        background-color: #EAEAEA;
+    }
 </style>
 </head>
 <body>
-<th:block th:if="${ list }" >
-    <h1 onclick="location.href='/newsmain'">뉴스 게시판</h1>
-    <hr>
-    <table>
-        <tr>
-            <td>번호</td>
-            <td>제목</td>
-            <td>작성자</td>
-            <td>작성일</td>
-            <td>조회수</td>
-        </tr>
+<h1 onclick="location.href='/newsmain'">뉴스 게시판</h1>
+<hr>
+<table>
+    <tr id="thead">
+        <td>번호</td>
+        <td>제목</td>
+        <td>작성자</td>
+        <td>작성일</td>
+        <td>조회수</td>
+    </tr>
+    <th:block th:if="${list}">
         <tr th:each="vo : ${list}">
             <td>[[${ vo.id }]]</td>
             <td th:class="${vo.id}" th:onclick="|getContent(${vo.id})|">[[${ vo.title }]]</td>
@@ -55,28 +61,32 @@
             <td>[[${ vo.cnt }]]</td>
             <td th:class="${vo.id}" hidden>[[${ vo.content }]]</td>
         </tr>
-    </table>
-</th:block>
-<th:block th:if="${ msg }" >
+    </th:block>
+    <th:block th:if="${msg}">
+        <tr>
+            <td colspan="6">[[${ msg }]]</td>
+        </tr>
+    </th:block>
+</table>
+<th:block th:if="${ errorMsg }" >
     <script th:inline="javascript">
-		alert([[${ msg }]]);
-	</script>
+        alert([[${ errorMsg }]]);
+    </script>
 </th:block>
-
 <div id="search">
-    <hr>
     <form method = "get" action ="/search">
         <input type = "search" name = "keyword" >
         <input type = "submit" value = "뉴스검색">
     </form>
 </div>
-<button onclick="displayDiv();">뉴스 작성</button>
+<br>
+<button onclick="displayWrite();">뉴스 작성</button>
 <th:block th:if="${ button }" >
     <hr>
     <button onclick="location.href='/newsmain'">[[${ button }]]</button>
 </th:block>
 <script>
-function displayDiv() {
+function displayWrite() {
 		document.getElementById("write").style.display='block';
 		document.getElementById("divT").style.display='none';
 
@@ -90,20 +100,8 @@ function displayDiv() {
         document.querySelector("#write [id=btn2]").type = "reset";
         document.querySelector("#write [id=btn3]").value = "취소";
         document.querySelector("#write [id=btn3]").type = "button";
-        document.querySelector("#write [id=btn3]").onclick = "document.getElementById('write').style.display='none';return false";
+        document.querySelector("#write [id=btn3]").setAttribute("onclick", "document.getElementById('write').style.display='none';return false");
 		document.querySelector("#write form").action="/insert";
-}
-
-function displayDiv2(type) {
-	if(type == 1) {
-		document.getElementById("search").style.display='none';
-		document.getElementById("write").style.display='block';
-		document.getElementById("divT").textContent="뉴스 내용";
-		document.querySelector("#write [type=submit]").value="등록";
-	} else if(type == 2) {
-		document.getElementById("write").style.display='none';
-		document.getElementById("search").style.display='block';
-	}
 }
 
 function displayContent(vo) {
@@ -120,31 +118,8 @@ function displayContent(vo) {
 	document.querySelector("#write [id=btn2]").type = "submit";
 	document.querySelector("#write [id=btn3]").value = "삭제";
 	document.querySelector("#write [id=btn3]").type = "button";
-	document.querySelector("#write [id=btn3]").onclick = "/delete?id=" + vo.id;
+	document.querySelector("#write [id=btn3]").setAttribute("onclick", "location.href='/delete?id=" + vo.id +"'");
 	document.querySelector("#write [type=hidden]").value=vo.id;
-	document.querySelector("#write form").action="/update";
-}
-
-function displayContent3(vo) {
-    var doms = document.getElementsByClassName(cv);
-    document.getElementById("search").style.display='none';
-	document.getElementById("write").style.display='block';
-	document.getElementById("n_writer").value =
-		                                  doms[1].textContent;
-	document.getElementById("n_title").value =
-		                                  doms[0].textContent;
-    document.getElementById("n_content").value =
-                                          doms[2].textContent;
-
-    document.getElementById("divT").style.display='block';
-	document.querySelector("#write [id=btn1]").value = "확인";
-	document.querySelector("#write [id=btn1]").type= "button";
-	document.querySelector("#write [id=btn2]").value = "수정";
-	document.querySelector("#write [id=btn2]").type = "submit";
-	document.querySelector("#write [id=btn3]").value = "삭제";
-	document.querySelector("#write [id=btn3]").type = "button";
-	document.querySelector("#write [id=btn3]").onclick = "/delete?id=" + cv;
-	document.querySelector("#write [type=hidden]").value=cv;
 	document.querySelector("#write form").action="/update";
 }
 
@@ -159,71 +134,24 @@ function getContent(id) {
 	xhr.open("GET", "/listOne?id="+id, true);
 	xhr.send();
 }
-
-function displayReply2(id) {
-	var xhr = new XMLHttpRequest();
-	xhr.onload = function () {
-		if(xhr.status == 200) {
-			//window.alert(xhr.responseText);
-			let jsondoms = JSON.parse(xhr.responseText);
-			let replyContent = "";
-			for(let i in jsondoms) {
-				i = Number(i);
-				replyContent += "[댓글"+(i+1)+"] 작성자명 : "+jsondoms[i].name+", 내용 : "+jsondoms[i].content+"\n";
-			}
-			if (!replyContent)
-				replyContent = "아직 댓글이 없네요!!";
-			window.alert(replyContent);
-		}
-	}
-	xhr.open("GET", "/listOne?id="+id, true);
-	xhr.send();
-}
-function insertReply(id) {
-	let name = window.prompt("댓글 작성자의 성명을 입력하세요..");
-	let content = window.prompt("댓글 내용을 입력하세요..");
-	let query = "name="+name+"&content="+content+"&refid="+id;
-	var xhr = new XMLHttpRequest();
-	xhr.onload = function () {
-		if(xhr.status == 200) {
-			let jsondom = JSON.parse(xhr.responseText);
-			if (jsondom.result == true)
-				window.alert("댓글 작성이 완료되었습니다.");
-			else
-				window.alert("댓글 작성에 실패했습니다.");
-		}
-	};
-	xhr.open("GET", "/meeting/ireply?"+query, true);
-	xhr.send();
-}
 </script>
-<div id="write"  style="display:none">
+<div id="write" style="display:none">
     <hr><h2 id="divT">뉴스 내용</h2>
     <form method = "post" action = "/insert">
         <input type="hidden" name="id" value="0">
-        작성자 : <input id="n_writer" type="text"  name="writer">
+        작성자 : <input id="n_writer" type="text" name="writer" size="45" placeholder="작성자명을 입력해주세요" required>
+        <br><br>
+        제 목 : <input id="n_title" type="text" name="title" size="45" placeholder="제목을 입력해주세요" required>
+        <br><br>
+        내용
         <br>
-        제목 : <br>
-        <input id="n_title" type="text"  name="title">
-        <br>
-        내용 :  <textarea id="n_content"  rows="3" cols="60" name = "content" ></textarea>
+        &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+        <textarea id="n_content" rows="3" cols="45" name = "content" placeholder="내용을 입력해주세요" required></textarea>
         <br><br>
         <input type = "submit" id="btn1" value = "저장">
         <input type = "reset" id="btn2" value="재작성">
-        <input type="button" id="btn3" value="취소" onclick="document.getElementById('write').style.display='none';return false">
+        <input type="button" id="btn3" value="취소" >
     </form>
 </div>
-<!--<div id="search" style="display:none">-->
-<!--    <hr>-->
-<!--    <form method = "get" action ="/search">-->
-<!--        검색어 : <input type = "search" name = "keyword" >-->
-<!--        <input type = "submit" value = "검색">-->
-<!--    </form>-->
-<!--</div>-->
 </body>
 </html>
-
-
-
-
-

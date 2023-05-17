@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.transaction.Transactional;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Controller
@@ -25,7 +24,7 @@ public class NewsController {
         if (list.size() != 0) {
             mav.addObject("list", list);
         } else {
-            mav.addObject("msg", "게시글이 없습니다.");
+            mav.addObject("msg", "작성된 게시글이 없습니다.");
         }
         mav.setViewName("newsView");
         return mav;
@@ -38,7 +37,7 @@ public class NewsController {
         News vo = null;
         try {
             vo = newsRepository.findById(id).get();
-            vo.setCnt(vo.getCnt()+1); // 조회수
+            vo.setCnt(vo.getCnt()+1);
         } catch (Exception e) {
             return vo;
         }
@@ -54,7 +53,7 @@ public class NewsController {
             newsRepository.deleteById(id);
             mav.addObject("list", newsRepository.findAll());
         } catch (Exception e) {
-            mav.addObject("msg", "삭제를 처리하는 동안 오류가 발생했습니다.");
+            mav.addObject("errorMsg", "삭제를 처리하는 동안 오류가 발생했습니다.");
         }
         mav.setViewName("newsView");
         return mav;
@@ -94,12 +93,10 @@ public class NewsController {
         System.out.println(vo);
         ModelAndView mav = new ModelAndView();
         try {
-            LocalDateTime currentDateTime = LocalDateTime.now();
-            vo.setWriteDate(currentDateTime);
             newsRepository.save(vo);
             mav.addObject("list", newsRepository.findAll());
         } catch (Exception e) {
-            mav.addObject("msg", "글 작성을 처리하는 동안 오류가 발생했습니다.");
+            mav.addObject("errorMsg", "글 작성을 처리하는 동안 오류가 발생했습니다.");
         }
         mav.setViewName("newsView");
         return mav;
@@ -115,10 +112,9 @@ public class NewsController {
             oldvo.setWriter(vo.getWriter());
             oldvo.setTitle(vo.getTitle());
             oldvo.setContent(vo.getContent());
-//            oldvo.setWriteDate(vo.getWriteDate());
             mav.addObject("list", newsRepository.findAll());
         } catch (Exception e) {
-            mav.addObject("msg", "글 작성을 수정하는 동안 오류가 발생했습니다.");
+            mav.addObject("errorMsg", "글 작성을 수정하는 동안 오류가 발생했습니다.");
         }
         mav.setViewName("newsView");
         return mav;
