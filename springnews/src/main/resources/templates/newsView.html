@@ -8,19 +8,28 @@
    		font-weight: normal;
     	font-style: normal;
     }
-
     * {
     	font-family: 'OTWelcomeRA';
         text-align: center;
         margin-left: auto;
         margin-right: auto;
     }
+    a {
+        text-decoration: none;
+        color : #FF5E00;
+    }
+    #writer {
+        font-weight : bold;
+    }
 	td{
-		border-bottom : 2px dotted green;
+		border-bottom : 2px solid #F6F6F6;
+		padding-top : 10px;
+		padding-bottom : 10px;
 		padding-left : 20px;
+		padding-right : 20px;
 	}
 	tr:hover{
-		background-color : #FFD9FA;
+		background-color : #EAEAEA;
 		font-weight : bold;
 	}
 	td:nth-child(2){
@@ -37,13 +46,57 @@
 		padding-top : 5px;
 	}
     #thead {
-        background-color: #EAEAEA;
+        background-color: #F2CB61;
     }
+    #currentPageNum {
+        color : #FF5E00;
+        font-weight : bold;
+    }
+    #searchKeyword {
+        color : #FF5E00;
+    }
+    .btn-4 {
+        padding: 8px 18px;
+        font-size: 16px;
+        background-color: #F2CB61;
+    }
+    .btn-5 {
+        padding: 4px 12px;
+        font-size: 14px;
+        background-color: #F2CB61;
+    }
+    .btn-4:hover,
+    .btn-5:hover {
+        background-color: #FA9628;
+    }
+    .pagination ul {
+        display: inline-block;
+        padding: 0;
+        margin: 0;
+    }
+    .pagination li {
+        display: inline;
+        margin: 0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    .pagination li a {
+        display: inline-block;
+        padding: 5px 10px;
+        color : black;
+    }
+    #newsTitle:hover {
+        color : #FF5E00;
+    }
+
 </style>
 </head>
 <body>
-<h1 onclick="location.href='/newsmain'">뉴스 게시판</h1>
-<hr>
+<h1 id="newsTitle" onclick="location.href='/newsmain'">뉴스 게시판</h1>
+<th:block th:if="${searchMsg}">
+    <h2 id="searchKeyword">"[[${searchKeyword}]]"</h2>
+    <h2>[[${searchMsg}]]</h2>
+</th:block>
 <table>
     <tr id="thead">
         <td>번호</td>
@@ -55,11 +108,10 @@
     <th:block th:if="${list}">
         <tr th:each="vo : ${list}">
             <td>[[${ vo.id }]]</td>
-            <td th:class="${vo.id}" th:onclick="|getContent(${vo.id})|">[[${ vo.title }]]</td>
-            <td th:class="${vo.id}"><a th:href ="@{/writer(writer=${vo.writer})}">[[${ vo.writer }]]</a></td>
+            <td th:onclick="|getContent(${vo.id})|">[[${ vo.title }]]</td>
+            <td><a id="writer" th:href ="@{/writer(writer=${vo.writer})}">[[${ vo.writer }]]</a></td>
             <td th:text="${#temporals.format(vo.writeDate, 'yyyy-MM-dd')}"></td>
-            <td>[[${ vo.cnt }]]</td>
-            <td th:class="${vo.id}" hidden>[[${ vo.content }]]</td>
+            <td th:class="${vo.id}">[[${ vo.cnt }]]</td>
         </tr>
     </th:block>
     <th:block th:if="${msg}">
@@ -68,12 +120,28 @@
         </tr>
     </th:block>
 </table>
-<div class="pagination">
-    <span th:each="page : ${#numbers.sequence(0, totalPage - 1)}">
-        <a th:href="@{/part(page=${pageStat.index}, size=1)}" th:text="${pageStat.index + 1}"></a>
-    </span>
-</div>
-
+<th:block th:if="${pageDTO}">
+    <div class="pagination">
+        <ul>
+            <li th:if="${pageDTO.currentPage != 1}">
+                <a th:href="@{/newsmain(page=0)}"}>처음</a>
+            </li>
+            <li th:if="${pageDTO.startPage != 1}">
+                <a th:if="${pageDTO.startPage != 1}" th:href="@{/newsmain(page=${pageDTO.startPage - 2})}"}>이전</a>
+            </li>
+            <li th:each="page : ${#numbers.sequence(pageDTO.startPage, pageDTO.endPage)}">
+                <a id="currentPageNum" th:if="${pageDTO.currentPage eq page}" th:text="${page}"></a>
+                <a th:if="${pageDTO.currentPage ne page}" th:href="@{/newsmain(page=${page-1})}" th:text="${page}"></a>
+            </li>
+            <li th:if="${pageDTO.endPage} != ${pageDTO.totalPage}">
+                <a th:href="@{/newsmain(page=${pageDTO.endPage})}">다음</a>
+            </li>
+            <li th:if="${pageDTO.currentPage} != ${pageDTO.totalPage}">
+                <a th:href="@{/newsmain(page=${pageDTO.totalPage-1})}">마지막</a>
+            </li>
+        </ul>
+    </div>
+</th:block>
 <th:block th:if="${ errorMsg }" >
     <script th:inline="javascript">
         alert([[${ errorMsg }]]);
@@ -82,11 +150,11 @@
 <div id="search">
     <form method = "get" action ="/search">
         <input type = "search" name = "keyword" >
-        <input type = "submit" value = "뉴스검색">
+        <input type = "submit" class="btn-5" value = "뉴스검색">
     </form>
 </div>
 <br>
-<button onclick="displayWrite();">뉴스 작성</button>
+<button class="btn-4" onclick="displayWrite();">뉴스 작성</button>
 <script>
 function displayWrite() {
 		document.getElementById("write").style.display='block';
@@ -106,13 +174,16 @@ function displayWrite() {
 		document.querySelector("#write form").action="/insert";
 }
 
-function displayContent(vo) {
+function displayContent(vo, id) {
+    var cntDom = document.getElementsByClassName(id);
+
 	document.getElementById("write").style.display='block';
 	document.getElementById("divT").style.display='block';
 
 	document.getElementById("n_writer").value = vo.writer
 	document.getElementById("n_title").value = vo.title;
     document.getElementById("n_content").value = vo.content;
+    cntDom[0].innerHTML = vo.cnt;
 
 	document.querySelector("#write [id=btn1]").value = "확인";
 	document.querySelector("#write [id=btn1]").type= "button";
@@ -131,7 +202,7 @@ function getContent(id) {
 	xhr.onload = function () {
 		if(xhr.status == 200) {
 			let jsondoms = JSON.parse(xhr.responseText);
-			displayContent(jsondoms);
+			displayContent(jsondoms, id);
 		}
 	}
 	xhr.open("GET", "/listOne?id="+id, true);
@@ -142,13 +213,10 @@ function getContent(id) {
     <hr><h2 id="divT">뉴스 내용</h2>
     <form method = "post" action = "/insert">
         <input type="hidden" name="id" value="0">
-        작성자 : <input id="n_writer" type="text" name="writer" size="45" placeholder="작성자명을 입력해주세요" required>
+        <input id="n_writer" type="text" name="writer" size="45" placeholder="작성자명을 입력해주세요" required>
         <br><br>
-        제 목 : <input id="n_title" type="text" name="title" size="45" placeholder="제목을 입력해주세요" required>
+        <input id="n_title" type="text" name="title" size="45" placeholder="제목을 입력해주세요" required>
         <br><br>
-        내용
-        <br>
-        &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
         <textarea id="n_content" rows="3" cols="45" name = "content" placeholder="내용을 입력해주세요" required></textarea>
         <br><br>
         <input type = "submit" id="btn1" value = "저장">
